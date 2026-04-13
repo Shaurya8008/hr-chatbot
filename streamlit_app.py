@@ -10,8 +10,8 @@ from datetime import datetime
 
 # --- Page Configuration ---
 st.set_page_config(
-    page_title="AgriSense Portal",
-    page_icon="🤖",
+    page_title="AgriSense Elite | Smart HR",
+    page_icon="💠",
     layout="wide"
 )
 
@@ -20,20 +20,21 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'hr_database.db')
 INTENTS_PATH = os.path.join(BASE_DIR, 'hr_intents.json')
 
-# --- Logic Engine ---
+# --- Logic Engines ---
 
-class IntentClassifier:
-    def __init__(self, intents_file):
+class ResumeIntelligence:
+    KNOWN_SKILLS = {'python', 'javascript', 'react', 'sql', 'flask', 'django', 'aws', 'docker', 'git', 'java', 'nodejs', 'typescript', 'c++', 'oop', 'machine learning'}
+    
+    @staticmethod
+    def parse_pdf(pdf_bytes):
         try:
-            with open(intents_file, 'r') as f:
-                self.intents = json.load(f)['intents']
-        except: self.intents = []
-    def process(self, text):
-        text = text.lower()
-        for i in self.intents:
-            for p in i['phrases']:
-                if p.lower() in text: return i['intent']
-        return "unknown"
+            reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
+            text = "".join([p.extract_text() for p in reader.pages])
+            skills = [s for s in ResumeIntelligence.KNOWN_SKILLS if s in text.lower()]
+            email_match = re.search(r'[\w.+-]+@[\w-]+\.[\w.-]+', text)
+            email = email_match.group(0) if email_match else "candidate@example.com"
+            return {"text": text, "skills": skills, "email": email}
+        except: return None
 
 class HRSystem:
     def __init__(self, db_path):
@@ -62,110 +63,204 @@ class HRSystem:
     def get_application_status(self, app_id):
         return self._query("SELECT * FROM applications WHERE id = ?", (app_id,), fetchone=True)
 
-# --- Initialization ---
-if "init_v3" not in st.session_state:
+# --- Session Initialization ---
+if "init_v5" not in st.session_state:
     st.session_state.email = None
-    st.session_state.name = "Guest"
+    st.session_state.name = "Guest Candidate"
+    st.session_state.skills = []
     st.session_state.theme = "Light"
-    st.session_state.messages = [{"role": "bot", "content": "👋 **Hello!** I'm your HR AI. Use the button suggestions below for quick answers!"}]
+    st.session_state.messages = [{"role": "bot", "content": "👋 **Welcome!** Upload a resume to see your smart job recommendation matches!"}]
     st.session_state.system = HRSystem(DB_PATH)
-    st.session_state.nlu = IntentClassifier(INTENTS_PATH)
-    st.session_state.init_v3 = True
+    st.session_state.interview_mode = False
+    st.session_state.interview_step = 0
+    st.session_state.init_v5 = True
 
+# --- Theme CSS ---
 def apply_theme(theme):
     if theme == "Dark":
-        st.markdown("<style>.stApp { background: #111; color: white; } .stChatMessage { background: #222 !important; border-radius: 10px; } .stButton>button { background: #333 !important; color: white !important; }</style>", unsafe_allow_html=True)
+        st.markdown("<style>.stApp { background: #0e1117; color: white; } .stChatMessage { background: #161b22 !important; }</style>", unsafe_allow_html=True)
     else:
-        st.markdown("<style>.stApp { background: #fafafa; color: #333; } .stChatMessage { background: #fff !important; border: 1px solid #eee; border-radius: 10px; }</style>", unsafe_allow_html=True)
+        st.markdown("<style>.stApp { background: #f8fafc; color: #1e293b; } .stChatMessage { background: #ffffff !important; border: 1px solid #e2e8f0; }</style>", unsafe_allow_html=True)
 
-def get_bot_response(prompt):
-    intent = st.session_state.nlu.process(prompt)
-    if intent == "greet": return "Hello! How can I help you today?"
-    if intent == "job_openings": return "You can see all our current openings in the left panel!"
-    if intent == "leave_policy": return "Our policy provides 24 days of paid leave per year."
-    if intent == "check_status":
+# --- Interview Questions ---
+QUESTIONS = [
+    "Tell us about a technical challenge you solved recently.",
+    "How do you handle deadlines under pressure?",
+    "What interests you about AgriSense?",
+    "Describe your experience with the skills listed on your resume."
+]
+
+def handle_chat(prompt):
+    if st.session_state.interview_mode:
+        st.session_state.interview_step += 1
+        if st.session_state.interview_step < len(QUESTIONS):
+            return {"role": "bot", "content": f"👉 **Question {st.session_state.interview_step+1}:** {QUESTIONS[st.session_state.interview_step]}"}
+        st.session_state.interview_mode = False
+        return {"role": "bot", "content": "🏁 **Interview Complete!** Great job. We've updated your application profile."}
+    
+    p = prompt.lower()
+    
+    # HR Policy & FAQ Support
+    if "leave" in p or "policy" in p or "vacation" in p:
+        return {"role": "bot", "content": "📅 **Leave Policy:** Employees get 25 days of annual leave. Requests can be submitted through the payroll portal."}
+    if "salary" in p or "pay" in p or "bonus" in p:
+        return {"role": "bot", "content": "💰 **Compensation:** Salaries are credited on the last working day of the month. Annual bonuses are performance-linked."}
+    if "onboarding" in p or "joining" in p:
+        return {"role": "bot", "content": "📑 **Onboarding:** Please bring your ID, education certificates, and tax documents on your first day."}
+    
+    # Smart Status Support
+    if "status" in p or "track" in p:
         ids = re.findall(r'\d+', prompt)
         if ids:
-            status = st.session_state.system.get_application_status(ids[0])
-            if status: return f"📋 **Application #{ids[0]} Status:** {status['status']}"
-        return "Please provide your Application ID."
-    return "I'm your HR assistant! Ask me about jobs or status."
+            s = st.session_state.system.get_application_status(ids[0])
+            if s: return {"role": "bot", "content": f"🎯 **Status for ID #{ids[0]}:** {s['status']}"}
+        
+        # Auto-detect from session email
+        if st.session_state.email:
+            apps = st.session_state.system.get_apps(st.session_state.email)
+            if apps:
+                latest = apps[-1]
+                return {"role": "bot", "content": f"📋 **Latest Update:** Your application for **{latest['title']}** is currently **{latest['status']}**."}
+        return {"role": "bot", "content": "Please specify your Application ID, or upload your resume to see your history."}
+    
+    # Smart Matching Support
+    if "suggest" in p or "match" in p or "recommend" in p:
+        if st.session_state.skills:
+            # We already have scored_jobs in the tab scope, but let's re-calculate for the bot
+            jobs = st.session_state.system.get_jobs()
+            matches = []
+            for j in jobs:
+                j_skills = set(s.strip().lower() for s in j['skills'].split(','))
+                u_skills = set(st.session_state.skills)
+                score = int((len(j_skills & u_skills) / max(len(j_skills), 1)) * 100)
+                if score > 0: matches.append((j['title'], score))
+            
+            matches = sorted(matches, key=lambda x: x[1], reverse=True)
+            if matches:
+                res = "🎯 **Top Recommendations for you:**\n" + "\n".join([f"- **{m[0]}** ({m[1]}% match)" for m in matches[:3]])
+                return {"role": "bot", "content": res}
+        return {"role": "bot", "content": "Try uploading your resume in the sidebar! I'll then suggest roles matching your unique skills."}
+    
+    return {"role": "bot", "content": "I'm your HR AI. You can ask about policies, application status, or for job recommendations!"}
 
 # --- Sidebar ---
 with st.sidebar:
-    st.title("⚙️ Control")
+    st.title("🌐 Smart Portal")
     st.session_state.theme = "Dark" if st.toggle("🌙 Dark Mode", value=(st.session_state.theme == "Dark")) else "Light"
     apply_theme(st.session_state.theme)
+    
     st.divider()
-    if st.session_state.email:
-        st.write(f"Active Profile: **{st.session_state.name}**")
-        apps = st.session_state.system.get_apps(st.session_state.email)
-        st.metric("Total Applications", len(apps))
+    if not st.session_state.email:
+        res_file = st.file_uploader("Upload Resume (PDF)", type="pdf")
+        if res_file:
+            data = ResumeIntelligence.parse_pdf(res_file.read())
+            if data:
+                st.session_state.email = data['email']
+                st.session_state.skills = data['skills']
+                st.session_state.name = "Verified Candidate"
+                st.balloons()
+                st.rerun()
+    else:
+        st.success(f"Verified: **{st.session_state.email}**")
         if st.button("Logout"):
             st.session_state.email = None
             st.rerun()
-    else:
-        res = st.file_uploader("Upload Resume (PDF)", type="pdf")
-        if res:
-            st.session_state.email = "demo@example.com"
-            st.session_state.name = "Shaurya Singh"
-            st.rerun()
+
     st.divider()
+    st.subheader("🏢 Market Summary")
     jobs = st.session_state.system.get_jobs()
     if jobs:
-        df = pd.DataFrame(jobs)
-        st.bar_chart(df['department'].value_counts())
+        st.bar_chart(pd.DataFrame(jobs)['department'].value_counts())
 
-# --- Layout ---
-col_main, col_chat = st.columns([1.8, 1])
+# --- Main Layout ---
+tab_jobs, tab_profile, tab_chat = st.tabs(["🏢 Job Board", "👤 My Profile", "💬 AI Interview"])
 
-with col_main:
-    st.title("🏢 Career Portal")
-    search = st.text_input("🔍 Search roles...")
-    filtered = [j for j in jobs if not search or search.lower() in j['title'].lower()]
-    for i, job in enumerate(filtered):
+with tab_jobs:
+    st.title("💠 Opportunity Engine")
+    
+    # Matching Engine
+    scored_jobs = []
+    for j in jobs:
+        j_skills = set(s.strip().lower() for s in j['skills'].split(','))
+        u_skills = set(st.session_state.skills)
+        match_count = len(j_skills & u_skills)
+        match_pct = int((match_count / max(len(j_skills), 1)) * 100)
+        scored_jobs.append({**j, 'match': match_pct})
+    
+    scored_jobs = sorted(scored_jobs, key=lambda x: x['match'], reverse=True)
+    
+    search = st.text_input("🔍 Search roles...", placeholder="e.g. 'Software Engineer'")
+    
+    for i, job in enumerate(scored_jobs):
+        if search and search.lower() not in job['title'].lower(): continue
+        
         with st.container(border=True):
-            st.subheader(job['title'])
-            st.caption(f"{job['department']} • {job['location']}")
-            if st.button("Apply Now", key=f"apply_{job['id']}_{i}"):
-                if not st.session_state.email: st.warning("Upload resume first!")
+            col_info, col_btn = st.columns([4, 1])
+            col_info.subheader(job['title'])
+            col_info.caption(f"{job['department']} • {job['location']}")
+            
+            if st.session_state.skills:
+                color = "green" if job['match'] > 50 else "orange" if job['match'] > 0 else "grey"
+                col_btn.markdown(f":{color}[**{job['match']}% Match**]")
+            
+            with st.expander("Explore Requirements"):
+                st.write(job['description'])
+                st.write("**Target Skills:** " + job['skills'])
+                if st.session_state.skills:
+                    matches = [s for s in job['skills'].split(',') if s.strip().lower() in st.session_state.skills]
+                    if matches: st.success(f"Matching Skills: {', '.join(matches)}")
+            
+            if col_btn.button("Apply", key=f"apply_{job['id']}_{i}", use_container_width=True):
+                if not st.session_state.email: st.warning("Upload resume in sidebar!")
                 else:
                     app_id = st.session_state.system.apply(st.session_state.name, st.session_state.email, job['id'])
-                    st.toast(f"Application #{app_id} Sent!", icon="🚀")
+                    st.toast(f"Transmission ID #{app_id} Created!", icon="🚀")
                     st.rerun()
 
-with col_chat:
-    st.title("💬 AI Guide")
-    chat_box = st.container(height=450, border=True)
-    for m in st.session_state.messages:
-        chat_box.chat_message(m["role"]).markdown(m["content"])
-    
-    # --- QUICK SUGGESTIONS ---
-    st.write("💡 Suggested Actions:")
-    s_col1, s_col2 = st.columns(2)
-    
-    if s_col1.button("📂 View Jobs", use_container_width=True):
-        st.session_state.messages.append({"role": "user", "content": "View job openings"})
-        st.session_state.messages.append({"role": "bot", "content": get_bot_response("View job openings")})
-        st.rerun()
-        
-    if s_col2.button("📜 Leave Policy", use_container_width=True):
-        st.session_state.messages.append({"role": "user", "content": "What is the leave policy?"})
-        st.session_state.messages.append({"role": "bot", "content": get_bot_response("Leave policy")})
-        st.rerun()
-        
-    s_col3, s_col4 = st.columns(2)
-    if s_col3.button("❓ App Status", use_container_width=True):
-        st.session_state.messages.append({"role": "user", "content": "Check status of application"})
-        st.session_state.messages.append({"role": "bot", "content": "Please provide your Application ID (e.g. 'Status of 101')."})
-        st.rerun()
-        
-    if s_col4.button("💰 Salary Info", use_container_width=True):
-        st.session_state.messages.append({"role": "user", "content": "Tell me about salaries"})
-        st.session_state.messages.append({"role": "bot", "content": "Salaries are credited on the last day of the month. Check your payslip portal for details."})
-        st.rerun()
+with tab_profile:
+    st.title("👤 My Career Profile")
+    if not st.session_state.email:
+        st.info("Upload a resume in the sidebar to populate your profile.")
+    else:
+        c1, c2 = st.columns(2)
+        with c1:
+            st.write("### Extracted Skills")
+            for s in st.session_state.skills:
+                st.code(s.upper())
+        with c2:
+            st.write("### Application History")
+            apps = st.session_state.system.get_apps(st.session_state.email)
+            for a in apps:
+                st.info(f"#{a['id']} - **{a['title']}** ({a['status']})")
 
-    if prompt := st.chat_input("Type here..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        st.session_state.messages.append({"role": "bot", "content": get_bot_response(prompt)})
-        st.rerun()
+with tab_chat:
+    st.title("💬 AI Screening & Guidance")
+    col_c, col_q = st.columns([2, 1])
+    
+    with col_c:
+        with st.container(height=500, border=True):
+            for m in st.session_state.messages:
+                st.chat_message(m["role"]).write(m["content"])
+        
+        if prompt := st.chat_input("Start Interview or Ask Status..."):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            if "interview" in prompt.lower() and not st.session_state.interview_mode:
+                st.session_state.interview_mode = True
+                st.session_state.interview_step = -1
+            
+            resp = handle_chat(prompt)
+            st.session_state.messages.append(resp)
+            st.rerun()
+    
+    with col_q:
+        st.write("### Quick Actions")
+        if st.button("🚀 Start Mock Interview", use_container_width=True):
+            st.session_state.messages.append({"role": "user", "content": "I want to start the interview"})
+            st.session_state.interview_mode = True
+            st.session_state.interview_step = -1
+            resp = handle_chat("start")
+            st.session_state.messages.append(resp)
+            st.rerun()
+        
+        st.write("### FAQ Suggestions")
+        st.caption("- How many leaves do we get?\n- Check application status\n- Company tech stack")
