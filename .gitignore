@@ -3,9 +3,6 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.db
-hr_database.db
 uploads/
-hr_system
 .DS_Store
 .planning/
