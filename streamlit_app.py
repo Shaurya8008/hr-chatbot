@@ -17,108 +17,84 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# ── Init theme early so CSS is injected before everything else ──
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
+
 # ─────────────────────────────────────────────
 #  PREMIUM CSS – Light & Dark Aware
 # ─────────────────────────────────────────────
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+def inject_theme(dark: bool):
+    if dark:
+        bg, card_bg, card_border, text, sub = "#0e1117", "#1e2128", "#30363d", "#e6edf3", "#8b949e"
+        chip_bg, chip_border, chip_color = "#21262d", "#30363d", "#c9d1d9"
+    else:
+        bg, card_bg, card_border, text, sub = "#f8fafc", "#ffffff", "#e2e8f0", "#0f172a", "#64748b"
+        chip_bg, chip_border, chip_color = "#f8fafc", "#e2e8f0", "#334155"
 
-/* ─── Base ─── */
-html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-.block-container { padding: 1.5rem 2rem 0 2rem !important; }
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
+    .block-container {{ padding: 1.5rem 2rem 0 2rem !important; }}
+    .stApp {{ background-color: {bg} !important; }}
 
-/* ─── Sidebar ─── */
-[data-testid="stSidebar"] {
-    background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%) !important;
-    border-right: 1px solid rgba(255,255,255,0.06);
-}
-[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
-[data-testid="stSidebar"] .stFileUploader label { color: #94a3b8 !important; }
+    /* Sidebar always dark */
+    [data-testid="stSidebar"] {{
+        background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%) !important;
+        border-right: 1px solid rgba(255,255,255,0.06);
+    }}
+    [data-testid="stSidebar"] * {{ color: #e2e8f0 !important; }}
 
-/* ─── Job Cards ─── */
-.jcard {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 1.4rem 1.6rem;
-    margin-bottom: 1rem;
-    transition: box-shadow .2s, border-color .2s;
-    position: relative;
-}
-.jcard:hover {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.07);
-    border-color: #6366f1;
-}
-.badge {
-    display: inline-block;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-right: 6px;
-    margin-bottom: 6px;
-}
-.badge-dept  { background: #ede9fe; color: #5b21b6; }
-.badge-loc   { background: #dbeafe; color: #1d4ed8; }
-.badge-match { background: #d1fae5; color: #065f46; }
-.badge-new   { background: #fef3c7; color: #92400e; }
-.jtitle { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0.4rem 0 0.2rem; }
-.jdesc  { font-size: 0.88rem; color: #64748b; line-height: 1.6; }
+    /* Job Cards */
+    .jcard {{
+        background: {card_bg};
+        border: 1px solid {card_border};
+        border-radius: 16px;
+        padding: 1.4rem 1.6rem;
+        margin-bottom: 1rem;
+        transition: box-shadow .2s, border-color .2s;
+    }}
+    .jcard:hover {{ box-shadow: 0 8px 30px rgba(0,0,0,0.12); border-color: #6366f1; }}
+    .jtitle {{ font-size: 1.1rem; font-weight: 700; color: {text}; margin: 0.4rem 0 0.2rem; }}
+    .jdesc  {{ font-size: 0.88rem; color: {sub}; line-height: 1.6; }}
 
-/* ─── Chat ─── */
-.stChatMessage { border-radius: 14px !important; }
-[data-testid="stChatMessageContent"] p { font-size: 0.95rem; line-height: 1.7; }
+    /* Badges */
+    .badge {{ display:inline-block; font-size:0.72rem; font-weight:600;
+               padding:3px 10px; border-radius:20px; margin-right:6px; margin-bottom:6px; }}
+    .badge-dept  {{ background:#ede9fe; color:#5b21b6; }}
+    .badge-loc   {{ background:#dbeafe; color:#1d4ed8; }}
+    .badge-match {{ background:#d1fae5; color:#065f46; }}
+    .badge-new   {{ background:#fef3c7; color:#92400e; }}
 
-/* ─── Suggestion Buttons ─── */
-.sug-btn>button {
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #334155 !important;
-    border-radius: 20px !important;
-    font-size: 0.78rem !important;
-    font-weight: 500 !important;
-    padding: 4px 14px !important;
-    transition: all .2s !important;
-}
-.sug-btn>button:hover {
-    background: #6366f1 !important;
-    color: white !important;
-    border-color: #6366f1 !important;
-}
+    /* Chat messages */
+    .stChatMessage {{ border-radius:14px !important; background:{card_bg} !important;
+                      border:1px solid {card_border} !important; }}
+    [data-testid="stChatMessageContent"] p {{ font-size:0.95rem; line-height:1.7; color:{text}; }}
 
-/* ─── Primary Apply Button ─── */
-div[data-testid="column"] .stButton>button[kind="primary"],
-.primary-btn>button {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 10px !important;
-    font-weight: 600 !important;
-}
+    /* Suggestion chips */
+    .sug-btn>button {{
+        background: {chip_bg} !important; border: 1px solid {chip_border} !important;
+        color: {chip_color} !important; border-radius:20px !important;
+        font-size:0.78rem !important; font-weight:500 !important;
+        padding:4px 14px !important; transition:all .2s !important;
+    }}
+    .sug-btn>button:hover {{
+        background:#6366f1 !important; color:white !important; border-color:#6366f1 !important;
+    }}
 
-/* ─── Profile Card ─── */
-.profile-card {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    border-radius: 14px;
-    padding: 1.2rem 1.4rem;
-    color: white;
-    margin-bottom: 1rem;
-}
-.profile-card h3 { margin: 0; font-size: 1rem; font-weight: 700; }
-.profile-card p  { margin: 0; font-size: 0.82rem; opacity: 0.85; }
+    /* Profile card */
+    .profile-card {{
+        background: linear-gradient(135deg,#6366f1,#8b5cf6);
+        border-radius:14px; padding:1.2rem 1.4rem; color:white; margin-bottom:1rem;
+    }}
+    .profile-card h3 {{ margin:0; font-size:1rem; font-weight:700; }}
+    .profile-card p  {{ margin:0; font-size:0.82rem; opacity:0.85; }}
+    .stVerticalBlock {{ gap:0 !important; }}
+    </style>
+    """, unsafe_allow_html=True)
 
-/* ─── Match ring ─── */
-.match-ring {
-    font-size: 1.4rem;
-    font-weight: 800;
-    text-align: center;
-}
-
-/* ─── No scroll jump ─── */
-.stVerticalBlock { gap: 0 !important; }
-</style>
-""", unsafe_allow_html=True)
+inject_theme(st.session_state.dark_mode)
 
 
 # ─────────────────────────────────────────────
@@ -303,12 +279,13 @@ def bot_reply(prompt: str) -> str:
         if not st.session_state.user_skills:
             return "Upload your resume in the sidebar so I can match jobs to your skill set! 📄"
         jobs = db.jobs()
-        scored = sorted(
-            [(*divmod(0,1), j, match_score(j['skills'], st.session_state.user_skills)) for j in jobs],
-            key=lambda x: x[3][0], reverse=True
-        )
+        scored = []
+        for j in jobs:
+            pct, matched = match_score(j['skills'], st.session_state.user_skills)
+            scored.append((pct, matched, j))
+        scored.sort(key=lambda x: x[0], reverse=True)
         lines = ["🎯 **Top job matches for your profile:**\n"]
-        for _, _, j, (pct, matched) in scored[:5]:
+        for pct, matched, j in scored[:5]:
             if pct > 0:
                 lines.append(f"**#{j['id']} – {j['title']}** – _{pct}% match_ ✅ {', '.join(matched[:3])}")
         if len(lines) == 1: return "No strong matches found. Try uploading a more detailed resume."
@@ -409,17 +386,17 @@ def bot_reply(prompt: str) -> str:
 #  SESSION STATE
 # ─────────────────────────────────────────────
 if "boot" not in st.session_state:
-    st.session_state.boot        = True
-    st.session_state.email       = None
-    st.session_state.uname       = "Candidate"
-    st.session_state.user_skills = []
-    st.session_state.db          = DB()
-    st.session_state.nlu         = NLU()
-    st.session_state.iv_mode     = False
-    st.session_state.iv_step     = 0
-    st.session_state.iv_answers  = []
+    st.session_state.boot         = True
+    st.session_state.email        = None
+    st.session_state.uname        = "Candidate"
+    st.session_state.user_skills  = []
+    st.session_state.db           = DB()
+    st.session_state.nlu          = NLU()
+    st.session_state.iv_mode      = False
+    st.session_state.iv_step      = 0
+    st.session_state.iv_answers   = []
     st.session_state.last_applied = None
-    st.session_state.messages    = [
+    st.session_state.messages     = [
         {"role": "assistant", "content": (
             "👋 **Welcome to TalentAI!** I'm your smart HR partner.\n\n"
             "Upload your resume in the sidebar to unlock **personalised job matching**, "
@@ -434,6 +411,14 @@ if "boot" not in st.session_state:
 with st.sidebar:
     st.markdown("## 💼 TalentAI")
     st.caption("Your intelligent recruitment partner")
+
+    # ── Dark / Light Mode Toggle ──
+    new_dark = st.toggle("🌙 Dark Mode", value=st.session_state.dark_mode)
+    if new_dark != st.session_state.dark_mode:
+        st.session_state.dark_mode = new_dark
+        inject_theme(new_dark)
+        st.rerun()
+
     st.divider()
 
     # ── Profile Block ──
@@ -610,13 +595,13 @@ with jobs_col:
                 with st.expander("Details & Skills"):
                     st.markdown(f"**Full Description**\n\n{j['description']}")
                     st.markdown("**Required Skills**")
-                    skill_list = [s.strip() for s in j['skills'].split(',')]
-                    cols = st.columns(min(3, len(skill_list)))
-                    for ci, sk in enumerate(skill_list[:9]):
-                        hi = sk.lower() in matched
-                        cols[ci % 3].markdown(
-                            f"{'✅' if hi else '⬜'} `{sk.strip()}`"
-                        )
+                    skill_list = [s.strip() for s in j['skills'].split(',') if s.strip()]
+                    if skill_list:
+                        ncols = min(3, len(skill_list))
+                        cols  = st.columns(ncols)
+                        for ci, sk in enumerate(skill_list[:9]):
+                            hi = sk.lower() in matched
+                            cols[ci % ncols].markdown(f"{'✅' if hi else '⬜'} `{sk}`")
                     if matched:
                         st.success(f"Your matching skills: **{', '.join(matched[:5])}**")
 
