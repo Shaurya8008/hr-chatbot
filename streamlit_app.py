@@ -597,11 +597,15 @@ with jobs_col:
                     st.markdown("**Required Skills**")
                     skill_list = [s.strip() for s in j['skills'].split(',') if s.strip()]
                     if skill_list:
-                        ncols = min(3, len(skill_list))
-                        cols  = st.columns(ncols)
-                        for ci, sk in enumerate(skill_list[:9]):
-                            hi = sk.lower() in matched
-                            cols[ci % ncols].markdown(f"{'✅' if hi else '⬜'} `{sk}`")
+                        # Flat skill tags — no nested columns (avoids Streamlit nesting limit)
+                        tags = " ".join(
+                            f'<span style="display:inline-block;background:{"#d1fae5" if sk.lower() in matched else "#f1f5f9"};'
+                            f'color:{"#065f46" if sk.lower() in matched else "#475569"};'
+                            f'padding:3px 10px;border-radius:20px;font-size:0.78rem;font-weight:600;margin:3px;">'
+                            f'{"✅ " if sk.lower() in matched else ""}{sk}</span>'
+                            for sk in skill_list[:12]
+                        )
+                        st.markdown(tags, unsafe_allow_html=True)
                     if matched:
                         st.success(f"Your matching skills: **{', '.join(matched[:5])}**")
 
