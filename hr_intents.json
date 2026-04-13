@@ -1,0 +1,64 @@
+{
+  "intents": [
+    {
+      "intent": "greet",
+      "phrases": ["hello", "hi", "hey", "good morning", "good afternoon", "is anyone there?", "start"]
+    },
+    {
+      "intent": "farewell",
+      "phrases": ["bye", "goodbye", "see you later", "thanks for the help", "catch you later"]
+    },
+    {
+      "intent": "apply_job",
+      "phrases": ["how do i apply for a job?", "i want to apply", "application process", "where can i submit my resume?", "starting my application", "how to apply"]
+    },
+    {
+      "intent": "check_status",
+      "phrases": ["what is my application status?", "check application", "track my application", "where is my job application?", "has my application been reviewed?", "status of", "check status"]
+    },
+    {
+      "intent": "schedule_interview",
+      "phrases": ["i want to schedule an interview", "book my interview", "set up a meeting", "when can i interview?", "availability for interview"]
+    },
+    {
+      "intent": "reschedule_interview",
+      "phrases": ["i need to change my interview time", "reschedule my meeting", "can we move the interview?", "cancel and reschedule interview", "change interview date"]
+    },
+    {
+      "intent": "job_openings",
+      "phrases": ["current job openings", "what roles are available?", "any vacancies?", "list open positions", "jobs in engineering", "hiring in sales", "show me jobs", "available positions", "view job openings", "get me jobs", "jobs available"]
+    },
+    {
+      "intent": "job_details",
+      "phrases": ["tell me more about the job", "details for the role", "information on the position", "what are the requirements for", "more about", "role profile", "job details"]
+    },
+    {
+      "intent": "leave_policy",
+      "phrases": ["what is the leave policy?", "how many vacation days do i have?", "sick leave rules", "applying for leave", "paternity leave policy", "leave policy"]
+    },
+    {
+      "intent": "salary_info",
+      "phrases": ["when is payday?", "salary structure", "benefits and compensation", "is there a bonus?", "details about my pay", "salary info"]
+    },
+    {
+      "intent": "onboarding_faq",
+      "phrases": ["what is my joining date?", "documents needed for joining", "is there a dress code?", "what happens on the first day?", "onboarding process guide", "onboarding faq"]
+    },
+    {
+      "intent": "resignation_process",
+      "phrases": ["how to resign?", "what is the notice period?", "quitting the job", "exit process details", "submitting resignation", "how to resign"]
+    },
+    {
+      "intent": "save_resume",
+      "phrases": ["save my resume", "upload my resume", "here is my resume", "i want to upload my cv", "upload cv", "submit resume", "attach resume"]
+    },
+    {
+      "intent": "suggest_jobs",
+      "phrases": ["suggest jobs for me", "what roles match my profile", "recommend jobs", "jobs matching my skills", "suitable jobs for me", "job recommendations", "match my resume"]
+    },
+    {
+      "intent": "unknown",
+      "phrases": []
+    }
+  ]
+}
