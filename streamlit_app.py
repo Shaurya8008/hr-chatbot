@@ -672,6 +672,23 @@ def bot_reply(prompt: str) -> str:
                 f"**Status:** {row['status']}\n"
                 f"**Applied:** {row.get('applied_at','N/A')}")
 
+    # ── Salary Negotiation ──
+    if "negotiate" in prompt.lower() or "salary" in prompt.lower() and ("script" in prompt.lower() or "email" in prompt.lower()):
+        ids = re.findall(r'\d+', prompt)
+        jobs = st.session_state.get("last_search", [])
+        if ids:
+            idx = int(ids[0]) - 1
+            if 0 <= idx < len(jobs):
+                j = jobs[idx]
+                if not st.session_state.email:
+                    return f"Please upload your resume to generate a tailored salary negotiation script for {j['title']}."
+                profile = _build_profile_dict()
+                script = generate_salary_negotiation_script(profile, j)
+                return f"💰 **Salary Negotiation Script — {j['title']} at {j['company']}**\n\n```text\n{script}\n```\n\n💡 *Tip: Customize the placeholders before sending.*"
+        if jobs:
+            return "Which job do you want a negotiation script for? Use the number from your search — e.g., *'negotiate salary for 2'*."
+        return "Search for jobs first, then I'll write a professional salary negotiation script for you!"
+
     # ── Cover Letter ──
     if intent == "generate_cover_letter":
         if not st.session_state.email:
@@ -1060,13 +1077,13 @@ with st.sidebar:
     qa = [
         ("🔍 Search Jobs",        "find software developer jobs"),
         ("🎯 Match Resume",       "match my resume"),
+        ("💰 Negotiate Salary",   "negotiate salary for 1"),
         ("📝 Cover Letter",       "cover letter for 1"),
         ("📧 Cold Email",         "cold email for 1"),
         ("📊 Resume Summary",     "resume summary"),
         ("🎤 Mock Interview",     "start interview"),
         ("⚙️ Preferences",        "set my preferences"),
         ("❓ Leave Policy",       "leave policy for 1"),
-        ("💰 Salary Info",        "salary info for 1"),
         ("🎓 Onboarding FAQ",     "onboarding faq"),
     ]
     for label, msg in qa:
@@ -1566,6 +1583,9 @@ with jobs_col:
                 st.altair_chart(chart2, use_container_width=True)
                 
             st.markdown("### Candidate Database")
+            # Convert string dates to proper datetime objects for Streamlit's DatetimeColumn
+            df['applied_at'] = pd.to_datetime(df['applied_at'], errors='coerce')
+            
             # Enhanced DataFrame with column configuration
             st.dataframe(
                 df[["name", "email", "job_title", "job_company", "status", "applied_at"]],
