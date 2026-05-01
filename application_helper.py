@@ -386,4 +386,38 @@ Format as a numbered list."""
     except Exception:
         pass
     return "1. Tell me about a time you had to adapt to a major change at work.\n2. How do you handle disagreements with team members?\n3. Describe a project where you had to learn a new skill on the fly."
+# ─────────────────────────────────────────────
+#  ADVANCED HR & CAREER TOOLS
+# ─────────────────────────────────────────────
+def generate_salary_negotiation_script(profile: dict, job: dict) -> str:
+    """Generate a polite, professional salary negotiation script based on the profile and job."""
+    try:
+        prompt = f"""Write a professional and polite salary negotiation email script.
+The candidate is responding to a job offer and wants to negotiate the base salary or overall compensation package.
+Keep it under 150 words. Do not invent numbers if they aren't provided, just use placeholders like [Target Salary].
 
+CANDIDATE: {_profile_context(profile)}
+JOB: {_job_context(job)}"""
+        result = _call_gemini(prompt)
+        if result:
+            return result
+    except Exception:
+        pass
+    return "Hi [Hiring Manager Name],\n\nThank you so much for the offer for the [Job Title] position! I am very excited about the opportunity to join the team.\n\nBefore I sign, I would love to discuss the base salary. Given my experience and the current market rates for this role, I was hoping we could explore a starting salary closer to [Target Salary/Range].\n\nI am very enthusiastic about bringing my skills to the company and am open to discussing the overall compensation package.\n\nBest regards,\n[Your Name]"
+
+
+def generate_onboarding_plan(candidate_name: str, job_title: str) -> str:
+    """HR Tool: Generate a 30-60-90 day onboarding plan for a specific role."""
+    try:
+        prompt = f"""Generate a high-level 30-60-90 day onboarding plan for a new hire.
+Candidate Name: {candidate_name}
+Role: {job_title}
+
+Structure it clearly with bullet points for Month 1 (30 days), Month 2 (60 days), and Month 3 (90 days).
+Focus on integration, learning, and early wins."""
+        result = _call_gemini(prompt)
+        if result:
+            return result
+    except Exception:
+        pass
+    return f"**30-60-90 Day Plan for {candidate_name} ({job_title})**\n\n**First 30 Days (Learning):**\n- Complete HR onboarding and IT setup.\n- Meet team members and key stakeholders.\n- Review company documentation and architecture.\n\n**First 60 Days (Executing):**\n- Take on first small tasks or projects.\n- Shadow senior team members.\n- Establish regular 1:1 cadence with manager.\n\n**First 90 Days (Owning):**\n- Fully own a core responsibility or project.\n- Contribute proactively to team meetings.\n- Identify one process improvement."

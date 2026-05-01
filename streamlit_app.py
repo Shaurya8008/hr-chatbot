@@ -5,8 +5,11 @@ import PyPDF2
 
 from jobs_api import search_jobs, rank_jobs_for_profile, extract_skills_from_description
 from application_helper import (
-    generate_cover_letter, generate_resume_summary,
-    generate_cold_email, extract_key_requirements, generate_fit_explanation,
+    parse_resume_text, extract_skills, rank_jobs, extract_key_requirements,
+    generate_resume_summary, generate_cold_email, generate_cover_letter,
+    generate_skill_gap_analysis, generate_follow_up_email, detect_job_bias,
+    generate_culture_fit_questions, generate_salary_negotiation_script,
+    generate_onboarding_plan, generate_fit_explanation,
 )
 
 # ─────────────────────────────────────────────
@@ -941,6 +944,9 @@ with st.sidebar:
         if st.session_state.user_skills:
             st.markdown("**🛠 Skills**")
             st.write(", ".join(s.capitalize() for s in st.session_state.user_skills[:15]))
+            
+        resume_text = f"# {st.session_state.uname}\n\n**Email:** {st.session_state.email}\n**Experience Level:** {st.session_state.exp_level.capitalize() if st.session_state.exp_level else 'Not Specified'}\n\n## Professional Summary\nPassionate professional eager to contribute to a dynamic team. Strong track record of continuous learning and adaptability.\n\n## Core Skills\n{', '.join(s.capitalize() for s in st.session_state.user_skills) if st.session_state.user_skills else 'General Professional Skills'}\n\n## Experience\n*Details extracted from original resume upload*\n"
+        st.download_button("📥 Download ATS Resume", resume_text, f"{st.session_state.uname.replace(' ','_')}_Resume.txt", "text/plain", use_container_width=True)
 
         # ── Preferences Expander ──
         with st.expander("⚙️ Job Preferences", expanded=False):
@@ -1250,14 +1256,16 @@ with jobs_col:
                         if st.session_state.email:
                             profile = _build_profile_dict()
                             try:
-                                letter = generate_cover_letter(profile, sj)
-                                msg = f"📝 **Cover Letter for {sj['title']} at {sj['company']}**\n\n---\n\n{letter}\n\n---\n\n_Copy and use!_"
+                                with st.spinner("Drafting letter..."):
+                                    st.session_state[f"cl_{sj['job_id']}"] = generate_cover_letter(profile, sj)
                             except Exception:
-                                msg = f"📝 **Cover Letter for {sj['title']}**\n\n⚠️ Could not generate right now. Try again in a moment."
-                            st.session_state.messages.append({"role": "assistant", "content": msg})
-                            st.rerun()
+                                st.error("⚠️ Could not generate right now. Try again in a moment.")
                         else:
                             st.error("Upload resume first!")
+                            
+                    if st.session_state.get(f"cl_{sj['job_id']}"):
+                        st.text_area("Your Cover Letter", st.session_state[f"cl_{sj['job_id']}"], height=200, key=f"ta_{sj['job_id']}")
+                        st.download_button("📥 Download .txt", st.session_state[f"cl_{sj['job_id']}"], f"Cover_Letter_{sj['company']}.txt", "text/plain", key=f"dl_{sj['job_id']}", use_container_width=True)
                 with dp_cols[3]:
                     if st.button("💾 Save", key="dp_sv", use_container_width=True):
                         if st.session_state.email:
@@ -1373,6 +1381,19 @@ with jobs_col:
             if not apps:
                 st.info("You haven't tracked any applications yet. Apply to jobs on the Job Board!")
             else:
+                import pandas as pd
+                import altair as alt
+                df_apps = pd.DataFrame(apps)
+                status_counts = df_apps['status'].value_counts().reset_index()
+                status_counts.columns = ['Status', 'Count']
+                chart = alt.Chart(status_counts).mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5).encode(
+                    x=alt.X('Status', sort=["Applied", "Interviewing", "Offer", "Rejected"]),
+                    y='Count',
+                    color=alt.Color('Status', scale=alt.Scale(domain=["Applied", "Interviewing", "Offer", "Rejected"], range=['#3b82f6', '#f59e0b', '#10b981', '#ef4444']), legend=None)
+                ).properties(height=250, title="Pipeline Velocity")
+                st.altair_chart(chart, use_container_width=True)
+                st.divider()
+                
                 for idx, a in enumerate(apps):
                     with st.container(border=True):
                         col1, col2, col3 = st.columns([3, 2, 1])
@@ -1388,11 +1409,63 @@ with jobs_col:
                                 st.rerun()
                         with col3:
                             if st.button("Follow-up Email", key=f"fu_{a['id']}", use_container_width=True):
-                                profile = _build_profile_dict()
-                                job_mock = {"title": a["job_title"], "company": a["job_company"]}
-                                email = generate_follow_up_email(profile, job_mock)
-                                st.session_state.messages.append({"role": "assistant", "content": f"📧 **Follow-up for {a['job_title']}**\n\n---\n\n{email}"})
-                                st.rerun()
+                                with st.spinner("Drafting..."):
+                                    profile = _build_profile_dict()
+                                    job_mock = {"title": a["job_title"], "company": a["job_company"]}
+                                    st.session_state[f"fu_email_{a['id']}"] = generate_follow_up_email(profile, job_mock)
+                            
+                            if st.session_state.get(f"fu_email_{a['id']}"):
+                                st.text_area("Draft", st.session_state[f"fu_email_{a['id']}"], height=150, key=f"ta_fu_{a['id']}")
+                                st.download_button("📥 Download", st.session_state[f"fu_email_{a['id']}"], f"Follow_Up_{a['job_company']}.txt", "text/plain", key=f"dl_fu_{a['id']}", use_container_width=True)
+
+                            if st.button("💰 Negotiate", key=f"neg_{a['id']}", use_container_width=True):
+                                with st.spinner("Drafting..."):
+                                    profile = _build_profile_dict()
+                                    job_mock = {"title": a["job_title"], "company": a["job_company"]}
+                                    st.session_state[f"neg_script_{a['id']}"] = generate_salary_negotiation_script(profile, job_mock)
+                                    
+                            if st.session_state.get(f"neg_script_{a['id']}"):
+                                st.text_area("Script", st.session_state[f"neg_script_{a['id']}"], height=150, key=f"ta_neg_{a['id']}")
+                                st.download_button("📥 Download Script", st.session_state[f"neg_script_{a['id']}"], f"Negotiation_{a['job_company']}.txt", "text/plain", key=f"dl_neg_{a['id']}", use_container_width=True)
+
+    elif st.session_state.app_mode == "Mock Interview":
+        st.markdown('<div class="section-title">🎤 Mock Interview Simulator</div>', unsafe_allow_html=True)
+        st.write("Simulate a behavioral interview for an upcoming role.")
+        if not st.session_state.email:
+            st.warning("Upload your resume to start an interview.")
+        else:
+            apps = st.session_state.db.my_apps(st.session_state.email)
+            app_options = {f"{a['job_title']} at {a['job_company']}": a for a in apps} if apps else {}
+            if not app_options:
+                st.info("You need to save/apply for a job first to run a mock interview.")
+            else:
+                sel_app_label = st.selectbox("Select Job to Interview For:", list(app_options.keys()))
+                sel_app = app_options[sel_app_label]
+                
+                if st.button("Start Interview Simulation", type="primary"):
+                    st.session_state["mock_interview_active"] = True
+                    st.session_state["mock_interview_history"] = [
+                        {"role": "assistant", "content": f"Hi {st.session_state.uname}, I'm the hiring manager for the {sel_app['job_title']} role at {sel_app['job_company']}. Tell me a bit about your background and why you applied."}
+                    ]
+                    
+                if st.session_state.get("mock_interview_active"):
+                    for msg in st.session_state["mock_interview_history"]:
+                        with st.chat_message(msg["role"]):
+                            st.markdown(msg["content"])
+                            
+                    if user_resp := st.chat_input("Your response..."):
+                        st.session_state["mock_interview_history"].append({"role": "user", "content": user_resp})
+                        st.chat_message("user").markdown(user_resp)
+                        with st.spinner("Interviewer is typing..."):
+                            from application_helper import _call_gemini
+                            history_str = "\\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state["mock_interview_history"]])
+                            prompt = f"You are a strict but fair hiring manager interviewing a candidate for a {sel_app['job_title']} role. Here is the conversation so far:\\n{history_str}\\n\\nAsk the next behavioral question. Keep it under 50 words. Do not break character."
+                            try:
+                                reply = _call_gemini(prompt) or "That's interesting. Tell me more."
+                            except Exception:
+                                reply = "That's interesting. Tell me more."
+                            st.session_state["mock_interview_history"].append({"role": "assistant", "content": reply})
+                            st.rerun()
 
     elif st.session_state.app_mode == "Career Coach":
         st.markdown('<div class="section-title">🧠 AI Career Coach</div>', unsafe_allow_html=True)
@@ -1408,9 +1481,14 @@ with jobs_col:
                         profile = _build_profile_dict()
                         job_mock = {"description": target_job, "title": "Target Role", "company": "Company"}
                         analysis = generate_skill_gap_analysis(profile, job_mock)
-                        st.markdown(f"**Analysis Result:**\n\n{analysis}")
+                        st.session_state["last_analysis"] = analysis
+                        
                 else:
                     st.error("Please paste a job description first.")
+                        
+            if st.session_state.get("last_analysis"):
+                st.markdown(f"**Analysis Result:**\n\n{st.session_state['last_analysis']}")
+                st.download_button("📥 Download Analysis", st.session_state["last_analysis"], "Skill_Gap_Analysis.txt", "text/plain", key="dl_analysis")
 
     elif st.session_state.app_mode == "ATS Dashboard":
         st.markdown('<div class="section-title">🏢 ATS Dashboard (HR View)</div>', unsafe_allow_html=True)
@@ -1420,8 +1498,59 @@ with jobs_col:
             st.info("No applications received yet.")
         else:
             import pandas as pd
+            import altair as alt
             df = pd.DataFrame(apps)
-            st.dataframe(df[["name", "email", "job_title", "job_company", "status", "applied_at"]], use_container_width=True)
+            
+            st.markdown("### Application Pipeline")
+            col1, col2 = st.columns(2)
+            with col1:
+                status_counts = df['status'].value_counts().reset_index()
+                status_counts.columns = ['Status', 'Count']
+                chart1 = alt.Chart(status_counts).mark_arc(innerRadius=50).encode(
+                    theta=alt.Theta(field="Count", type="quantitative"),
+                    color=alt.Color(field="Status", type="nominal"),
+                    tooltip=['Status', 'Count']
+                ).properties(height=300, title="Status Distribution")
+                st.altair_chart(chart1, use_container_width=True)
+            with col2:
+                role_counts = df['job_title'].value_counts().head(5).reset_index()
+                role_counts.columns = ['Job Role', 'Applications']
+                chart2 = alt.Chart(role_counts).mark_bar(cornerRadiusEnd=5).encode(
+                    y=alt.Y('Job Role', sort='-x', title=""),
+                    x=alt.X('Applications', title=""),
+                    color=alt.value('#6366f1'),
+                    tooltip=['Job Role', 'Applications']
+                ).properties(height=300, title="Top Roles by Volume")
+                st.altair_chart(chart2, use_container_width=True)
+                
+            st.markdown("### Candidate Database")
+            # Enhanced DataFrame with column configuration
+            st.dataframe(
+                df[["name", "email", "job_title", "job_company", "status", "applied_at"]],
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "name": "Candidate",
+                    "email": "Contact",
+                    "job_title": "Role",
+                    "job_company": "Company",
+                    "status": st.column_config.SelectboxColumn("Status", options=["Applied", "Interviewing", "Offer", "Rejected"]),
+                    "applied_at": st.column_config.DatetimeColumn("Date", format="D MMM YYYY")
+                }
+            )
+            
+            st.divider()
+            st.markdown("### Onboarding Plan Generator")
+            cand_name = st.selectbox("Select Candidate to Generate 30-60-90 Day Plan", df["name"].unique())
+            cand_row = df[df["name"] == cand_name].iloc[0]
+            if st.button("Generate Onboarding Plan", type="primary"):
+                with st.spinner("Generating..."):
+                    plan = generate_onboarding_plan(cand_row["name"], cand_row["job_title"])
+                    st.session_state["last_onboarding_plan"] = plan
+                    
+            if st.session_state.get("last_onboarding_plan"):
+                st.markdown(st.session_state["last_onboarding_plan"])
+                st.download_button("📥 Download Plan", st.session_state["last_onboarding_plan"], f"Onboarding_{cand_name}.txt", "text/plain")
 
     elif st.session_state.app_mode == "Job Draft Analyzer":
         st.markdown('<div class="section-title">📝 D&I Job Draft Analyzer</div>', unsafe_allow_html=True)
@@ -1448,6 +1577,10 @@ with jobs_col:
             if jtitle and jcompany:
                 with st.spinner("Generating..."):
                     q = generate_culture_fit_questions(jtitle, jcompany)
-                    st.markdown(f"**Recommended Questions:**\n\n{q}")
+                    st.session_state["last_cf_q"] = q
+                    
+            if st.session_state.get("last_cf_q"):
+                st.markdown(f"**Recommended Questions:**\n\n{st.session_state['last_cf_q']}")
+                st.download_button("📥 Download Questions", st.session_state["last_cf_q"], f"Interview_Questions_{jcompany}.txt", "text/plain", key="dl_cf_q")
             else:
                 st.error("Provide both title and company.")
