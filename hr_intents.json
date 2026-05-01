@@ -9,6 +9,18 @@
       "phrases": ["bye", "goodbye", "see you later", "thanks for the help", "catch you later"]
     },
     {
+      "intent": "search_jobs",
+      "phrases": ["find me jobs", "search jobs", "look for jobs", "job search", "find roles", "find me a role", "remote jobs", "find remote", "show me remote", "sde role", "developer jobs", "analyst jobs", "engineering jobs", "find me remote python jobs", "data analyst internship", "remote sde role"]
+    },
+    {
+      "intent": "job_openings",
+      "phrases": ["current job openings", "what roles are available?", "any vacancies?", "list open positions", "jobs in engineering", "hiring in sales", "show me jobs", "available positions", "view job openings", "get me jobs", "jobs available"]
+    },
+    {
+      "intent": "suggest_jobs",
+      "phrases": ["suggest jobs for me", "what roles match my profile", "recommend jobs", "jobs matching my skills", "suitable jobs for me", "job recommendations", "match my resume", "match jobs to my resume", "best jobs for me"]
+    },
+    {
       "intent": "apply_job",
       "phrases": ["how do i apply for a job?", "i want to apply", "application process", "where can i submit my resume?", "starting my application", "how to apply"]
     },
@@ -17,20 +29,28 @@
       "phrases": ["what is my application status?", "check application", "track my application", "where is my job application?", "has my application been reviewed?", "status of", "check status"]
     },
     {
+      "intent": "generate_cover_letter",
+      "phrases": ["write a cover letter", "cover letter for", "generate cover letter", "help me write a cover letter", "draft a cover letter", "cover letter"]
+    },
+    {
+      "intent": "generate_resume_summary",
+      "phrases": ["help with my resume", "resume summary", "write resume summary", "tailor my resume", "resume for this job", "resume bullet points", "generate resume"]
+    },
+    {
+      "intent": "generate_cold_email",
+      "phrases": ["cold email", "write an email to apply", "draft email", "application email", "outreach email", "email for job"]
+    },
+    {
+      "intent": "set_preferences",
+      "phrases": ["i prefer remote", "my salary range", "set my preferences", "update my profile", "i want to work in", "my experience level is", "i am a fresher", "i am senior", "change location preference"]
+    },
+    {
+      "intent": "bookmark_job",
+      "phrases": ["save this job", "bookmark job", "save job", "add to favorites", "shortlist this"]
+    },
+    {
       "intent": "schedule_interview",
-      "phrases": ["i want to schedule an interview", "book my interview", "set up a meeting", "when can i interview?", "availability for interview"]
-    },
-    {
-      "intent": "reschedule_interview",
-      "phrases": ["i need to change my interview time", "reschedule my meeting", "can we move the interview?", "cancel and reschedule interview", "change interview date"]
-    },
-    {
-      "intent": "job_openings",
-      "phrases": ["current job openings", "what roles are available?", "any vacancies?", "list open positions", "jobs in engineering", "hiring in sales", "show me jobs", "available positions", "view job openings", "get me jobs", "jobs available"]
-    },
-    {
-      "intent": "job_details",
-      "phrases": ["tell me more about the job", "details for the role", "information on the position", "what are the requirements for", "more about", "role profile", "job details"]
+      "phrases": ["i want to schedule an interview", "book my interview", "set up a meeting", "when can i interview?", "availability for interview", "start interview", "mock interview"]
     },
     {
       "intent": "leave_policy",
@@ -51,10 +71,6 @@
     {
       "intent": "save_resume",
       "phrases": ["save my resume", "upload my resume", "here is my resume", "i want to upload my cv", "upload cv", "submit resume", "attach resume"]
-    },
-    {
-      "intent": "suggest_jobs",
-      "phrases": ["suggest jobs for me", "what roles match my profile", "recommend jobs", "jobs matching my skills", "suitable jobs for me", "job recommendations", "match my resume"]
     },
     {
       "intent": "unknown",
