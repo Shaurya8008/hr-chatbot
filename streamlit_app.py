@@ -1058,11 +1058,16 @@ with st.sidebar:
     st.markdown("**⚡ Quick Actions**")
     st.markdown('<div class="sug-btn">', unsafe_allow_html=True)
     qa = [
-        ("🔍 Search Jobs",     "find software developer jobs"),
-        ("🎯 Match Resume",    "match my resume"),
-        ("📝 Cover Letter",    "cover letter for 1"),
-        ("📧 Cold Email",      "cold email for 1"),
-        ("🎤 Mock Interview",  "start interview"),
+        ("🔍 Search Jobs",        "find software developer jobs"),
+        ("🎯 Match Resume",       "match my resume"),
+        ("📝 Cover Letter",       "cover letter for 1"),
+        ("📧 Cold Email",         "cold email for 1"),
+        ("📊 Resume Summary",     "resume summary"),
+        ("🎤 Mock Interview",     "start interview"),
+        ("⚙️ Preferences",        "set my preferences"),
+        ("❓ Leave Policy",       "leave policy for 1"),
+        ("💰 Salary Info",        "salary info for 1"),
+        ("🎓 Onboarding FAQ",     "onboarding faq"),
     ]
     for label, msg in qa:
         if st.button(label, use_container_width=True, key=f"qa_{label}"):
