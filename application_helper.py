@@ -421,3 +421,21 @@ Focus on integration, learning, and early wins."""
     except Exception:
         pass
     return f"**30-60-90 Day Plan for {candidate_name} ({job_title})**\n\n**First 30 Days (Learning):**\n- Complete HR onboarding and IT setup.\n- Meet team members and key stakeholders.\n- Review company documentation and architecture.\n\n**First 60 Days (Executing):**\n- Take on first small tasks or projects.\n- Shadow senior team members.\n- Establish regular 1:1 cadence with manager.\n\n**First 90 Days (Owning):**\n- Fully own a core responsibility or project.\n- Contribute proactively to team meetings.\n- Identify one process improvement."
+
+
+def generate_status_email(candidate_name: str, job_title: str, status: str) -> str:
+    """HR Tool: Generate a tailored offer or rejection email based on pipeline status."""
+    try:
+        action = "extend an official job offer" if status == "Offer" else "inform them they were not selected"
+        prompt = f"""Write a professional HR email to {candidate_name} regarding their application for the {job_title} role.
+The purpose of this email is to {action}.
+Keep it concise, polite, and under 150 words. Do not use generic templates, make it sound human.
+Use placeholders like [Company Name] where necessary."""
+        result = _call_gemini(prompt)
+        if result:
+            return result
+    except Exception:
+        pass
+    if status == "Offer":
+        return f"Hi {candidate_name},\n\nWe are thrilled to extend an official offer for the {job_title} position! Our team was incredibly impressed with your skills.\n\nPlease find the details attached. Let us know if you have any questions.\n\nBest,\nHR Team"
+    return f"Hi {candidate_name},\n\nThank you for applying for the {job_title} role. We appreciate the time you took to interview.\n\nUnfortunately, we have decided to move forward with other candidates whose experience better aligns with our current needs.\n\nWe wish you the best in your job search.\n\nBest,\nHR Team"

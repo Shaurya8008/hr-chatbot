@@ -9,7 +9,7 @@ from application_helper import (
     generate_resume_summary, generate_cold_email, generate_cover_letter,
     generate_skill_gap_analysis, generate_follow_up_email, detect_job_bias,
     generate_culture_fit_questions, generate_salary_negotiation_script,
-    generate_onboarding_plan, generate_fit_explanation,
+    generate_onboarding_plan, generate_status_email, generate_fit_explanation
 )
 
 # ─────────────────────────────────────────────
@@ -192,6 +192,29 @@ def inject_theme(dark: bool):
     .badge-score-high {{ background:rgba(52,211,153,0.15); color:{green}; border:1px solid rgba(52,211,153,0.3); }}
     .badge-score-mid  {{ background:rgba(251,191,36,0.12); color:{amber}; border:1px solid rgba(251,191,36,0.25); }}
     .badge-score-low  {{ background:rgba(239,68,68,0.1);   color:#f87171; border:1px solid rgba(239,68,68,0.2); }}
+
+    /* ── Pipeline Stepper / Status Badges ── */
+    .status-badge {{
+        display:inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 700;
+    }}
+    .stat-applied {{ background:rgba(59,130,246,0.15); color:#3b82f6; border:1px solid rgba(59,130,246,0.3); }}
+    .stat-interviewing {{ background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); }}
+    .stat-offer {{ background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); }}
+    .stat-rejected {{ background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); }}
+
+    .stepper {{
+        display: flex; justify-content: space-between; align-items: center; margin: 15px 0 10px 0; position: relative;
+    }}
+    .stepper::before {{
+        content: ''; position: absolute; top: 50%; left: 5%; right: 5%; height: 2px; background: {card_bdr}; z-index: 0;
+    }}
+    .step {{
+        position: relative; z-index: 1; background: {card_bg}; border: 2px solid {card_bdr};
+        border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+        font-size: 0.65rem; color: {sub}; transition: all 0.3s;
+    }}
+    .step.active {{ border-color: {accent}; background: {accent}; color: white; box-shadow: 0 0 10px rgba(99,102,241,0.4); }}
+    .step.completed {{ border-color: {accent}; background: {card_bg}; color: {accent}; font-weight: bold; }}
 
     /* ── Chat ── */
     .stChatMessage {{ border-radius:14px !important; background:{card_bg} !important;
@@ -1399,6 +1422,21 @@ with jobs_col:
                         col1, col2, col3 = st.columns([3, 2, 1])
                         with col1:
                             st.markdown(f"#### {a['job_title']}\n**{a['job_company']}** • 📍 {a['job_location']}")
+                            
+                            steps = ["Applied", "Interviewing", "Offer"]
+                            cstat = a["status"] if a["status"] in steps else ("Applied" if a["status"]!="Rejected" else "Rejected")
+                            idx_stat = steps.index(cstat) if cstat in steps else -1
+                            
+                            if cstat == "Rejected":
+                                st.markdown("<div style='color:#ef4444; font-weight:bold; margin-top:10px;'>❌ Rejected</div>", unsafe_allow_html=True)
+                            else:
+                                step_html = "<div class='stepper'>"
+                                for i, s in enumerate(steps):
+                                    cls = "step completed" if i < idx_stat else ("step active" if i == idx_stat else "step")
+                                    step_html += f"<div class='{cls}'>{s}</div>"
+                                step_html += "</div>"
+                                st.markdown(step_html, unsafe_allow_html=True)
+                                
                             st.caption(f"Applied on: {a['applied_at']}")
                         with col2:
                             statuses = ["Applied", "Interviewing", "Offer", "Rejected"]
@@ -1540,17 +1578,34 @@ with jobs_col:
             )
             
             st.divider()
-            st.markdown("### Onboarding Plan Generator")
-            cand_name = st.selectbox("Select Candidate to Generate 30-60-90 Day Plan", df["name"].unique())
-            cand_row = df[df["name"] == cand_name].iloc[0]
-            if st.button("Generate Onboarding Plan", type="primary"):
-                with st.spinner("Generating..."):
-                    plan = generate_onboarding_plan(cand_row["name"], cand_row["job_title"])
-                    st.session_state["last_onboarding_plan"] = plan
-                    
-            if st.session_state.get("last_onboarding_plan"):
-                st.markdown(st.session_state["last_onboarding_plan"])
-                st.download_button("📥 Download Plan", st.session_state["last_onboarding_plan"], f"Onboarding_{cand_name}.txt", "text/plain")
+            st.markdown("### 📧 HR Communications & Onboarding")
+            col_a, col_b = st.columns(2)
+            
+            with col_a:
+                st.markdown("**Status Email Automator**")
+                cand_name_email = st.selectbox("Select Candidate", df["name"].unique(), key="sel_cand_email")
+                cand_row_email = df[df["name"] == cand_name_email].iloc[0]
+                if st.button("Draft Status Email", type="primary"):
+                    with st.spinner("Drafting..."):
+                        email_txt = generate_status_email(cand_row_email["name"], cand_row_email["job_title"], cand_row_email["status"])
+                        st.session_state["last_status_email"] = email_txt
+                        
+                if st.session_state.get("last_status_email"):
+                    st.text_area("Draft Email", st.session_state["last_status_email"], height=150)
+                    st.download_button("📥 Download Email", st.session_state["last_status_email"], f"Email_{cand_name_email}.txt", "text/plain", use_container_width=True)
+
+            with col_b:
+                st.markdown("**Onboarding Plan Generator**")
+                cand_name = st.selectbox("Select Candidate", df["name"].unique(), key="sel_cand_onboard")
+                cand_row = df[df["name"] == cand_name].iloc[0]
+                if st.button("Generate Onboarding Plan", type="primary"):
+                    with st.spinner("Generating..."):
+                        plan = generate_onboarding_plan(cand_row["name"], cand_row["job_title"])
+                        st.session_state["last_onboarding_plan"] = plan
+                        
+                if st.session_state.get("last_onboarding_plan"):
+                    st.text_area("Draft Plan", st.session_state["last_onboarding_plan"], height=150)
+                    st.download_button("📥 Download Plan", st.session_state["last_onboarding_plan"], f"Onboarding_{cand_name}.txt", "text/plain", use_container_width=True)
 
     elif st.session_state.app_mode == "Job Draft Analyzer":
         st.markdown('<div class="section-title">📝 D&I Job Draft Analyzer</div>', unsafe_allow_html=True)
