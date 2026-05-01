@@ -5,10 +5,9 @@ import PyPDF2
 
 from jobs_api import search_jobs, rank_jobs_for_profile, extract_skills_from_description
 from application_helper import (
-    parse_resume_text, extract_skills, rank_jobs, extract_key_requirements,
-    generate_resume_summary, generate_cold_email, generate_cover_letter,
-    generate_skill_gap_analysis, generate_follow_up_email, detect_job_bias,
-    generate_culture_fit_questions, generate_salary_negotiation_script,
+    extract_key_requirements, generate_resume_summary, generate_cold_email,
+    generate_cover_letter, generate_skill_gap_analysis, generate_follow_up_email,
+    detect_job_bias, generate_culture_fit_questions, generate_salary_negotiation_script,
     generate_onboarding_plan, generate_status_email, generate_fit_explanation
 )
 
