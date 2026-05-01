@@ -311,13 +311,18 @@ def _fetch_linkedin_live(query: str, page: int = 1) -> list[dict]:
             if link_m and title_m:
                 title = title_m.group(1).strip()
                 link = link_m.group(1).split('?')[0] # Remove tracking params
+                
+                # Accurately extract the numeric job ID
+                job_id_match = re.search(r'view/(?:.*?-)?(\d+)/?', link)
+                extracted_id = job_id_match.group(1) if job_id_match else link.split('-')[-1].strip('/')
+                
                 company = company_m.group(1).strip() if company_m else "Unknown Company"
                 loc = loc_m.group(1).strip() if loc_m else "Not specified"
                 
                 is_remote = "remote" in loc.lower() or "remote" in title.lower()
                 
                 jobs.append({
-                    "job_id": f"li_{link.split('-')[-1]}",
+                    "job_id": f"li_{extracted_id}",
                     "title": html.unescape(title),
                     "company": html.unescape(company),
                     "company_logo": None,
@@ -332,7 +337,7 @@ def _fetch_linkedin_live(query: str, page: int = 1) -> list[dict]:
                     "salary_max": 0,
                     "salary_currency": "USD",
                     "salary_period": "",
-                    "apply_link": f"https://www.linkedin.com/jobs/search/?currentJobId={link.split('-')[-1]}",
+                    "apply_link": f"https://www.linkedin.com/jobs/search/?currentJobId={extracted_id}",
                     "apply_options": [],
                     "qualifications": [],
                     "responsibilities": [],
