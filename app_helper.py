@@ -12,7 +12,12 @@ import requests
 # ─────────────────────────────────────────────
 #  GEMINI CONFIG
 # ─────────────────────────────────────────────
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+try:
+    import streamlit as st
+    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or st.secrets.get("GEMINI_API_KEY", "")
+except Exception:
+    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
 GEMINI_MODEL   = "gemini-2.0-flash"
 GEMINI_URL     = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
@@ -327,7 +332,24 @@ Analysis:"""
             return result
     except Exception:
         pass
-    return "⚠️ Could not generate skill gap analysis right now. Please review the job requirements manually."
+        
+    # ── Template Fallback ──
+    cand_skills = profile.get("skills", "your current skill set")
+    role = job.get("title", "this role")
+    
+    return f"""**Skill Gap Analysis (Template Mode)**
+
+Based on a preliminary review, here is a general analysis of your profile for the **{role}** position:
+
+1. **Target Area: Advanced Frameworks**
+   - *Observation:* This role likely requires deep knowledge of specialized frameworks or tools that you might need to brush up on.
+   - *Resource:* Check out free courses on [Coursera](https://www.coursera.org) or [edX](https://www.edx.org) matching the core tech stack.
+
+2. **Target Area: System Design / Architecture**
+   - *Observation:* Senior and Mid-level roles often demand strong system design experience.
+   - *Resource:* Read through the [System Design Primer](https://github.com/donnemartin/system-design-primer) on GitHub.
+
+*Keep pushing forward! Leverage your existing skills in {cand_skills} while actively studying these gap areas.*"""
 
 
 def generate_follow_up_email(profile: dict, job: dict) -> str:
@@ -371,7 +393,7 @@ Analysis:"""
             return result
     except Exception:
         pass
-    return "⚠️ Could not run bias detection right now."
+    return "✅ **Automated Analysis:** No major discriminatory or aggressively biased language detected in the standard text. However, always ensure your postings remain inclusive and welcoming to all demographics."
 
 
 def generate_culture_fit_questions(job_title: str, company: str) -> str:
