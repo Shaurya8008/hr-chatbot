@@ -281,7 +281,7 @@ def _fetch_jsearch(query: str, page: int = 1) -> list[dict]:
         return []
 
 
-def _fetch_linkedin_live(query: str, page: int = 1) -> list[dict]:
+def _fetch_linkedin_live(query: str, page: int = 1, location: str = "India") -> list[dict]:
     """Fetch live LinkedIn jobs using the public guest API."""
     try:
         import re
@@ -294,7 +294,8 @@ def _fetch_linkedin_live(query: str, page: int = 1) -> list[dict]:
         safe_query = urllib.parse.quote(query)
         # LinkedIn guest API uses 'start' for pagination (0, 10, 20...)
         start = (page - 1) * 10
-        url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={safe_query}&location=India&start={start}"
+        safe_loc = urllib.parse.quote(location) if location else "Worldwide"
+        url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={safe_query}&location={safe_loc}&start={start}"
         resp = requests.get(url, timeout=10)
         html_content = resp.text
 
@@ -352,7 +353,6 @@ def _fetch_linkedin_live(query: str, page: int = 1) -> list[dict]:
         return []
 
 
-
 # ─────────────────────────────────────────────
 #  PUBLIC API
 # ─────────────────────────────────────────────
@@ -360,7 +360,7 @@ def search_jobs(
     query: str,
     page: int = 1,
     num_pages: int = 1,
-    country: str = "",
+    country: str = "India",
     date_posted: str = "all",
     remote_only: bool = False,
     employment_type: str = "",
@@ -388,7 +388,7 @@ def search_jobs(
         futures = {
             pool.submit(_fetch_remotive, query, 20): "Remotive",
             pool.submit(_fetch_arbeitnow, query, page): "Arbeitnow",
-            pool.submit(_fetch_linkedin_live, query, page): "LinkedIn",
+            pool.submit(_fetch_linkedin_live, query, page, country): "LinkedIn",
         }
         # Only add JSearch if key is available
         if RAPIDAPI_KEY:
@@ -409,6 +409,15 @@ def search_jobs(
     if employment_type:
         et = employment_type.lower()
         all_jobs = [j for j in all_jobs if et in j["employment_type"].lower()]
+        
+    if country and country.lower() != "worldwide" and country.lower() != "anywhere":
+        country_lower = country.lower()
+        filtered_jobs = []
+        for j in all_jobs:
+            loc_lower = j["location"].lower()
+            if country_lower in loc_lower or "worldwide" in loc_lower or "anywhere" in loc_lower:
+                filtered_jobs.append(j)
+        all_jobs = filtered_jobs
 
     # Deduplicate by title+company
     seen = set()

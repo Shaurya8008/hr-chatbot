@@ -466,6 +466,7 @@ class NLU:
         if re.search(r'\bcold\s*email\b', t):                    return 'generate_cold_email'
         if re.search(r'\bfind\b.*\bjob', t) or re.search(r'\bsearch\b.*\bjob', t): return 'search_jobs'
         if re.search(r'\binterview\b', t):                       return 'schedule_interview'
+        if re.search(r'\bnegotiate\b', t):                       return 'salary_negotiation'
 
         if best_score < 0.2:
             return 'unknown'
@@ -1170,10 +1171,13 @@ with jobs_col:
         st.markdown('<div class="section-title">🌍 Live Job Board</div>', unsafe_allow_html=True)
 
         # ── Search Bar ──
-        fc1, fc2, fc3 = st.columns([3, 1.5, 1])
+        fc1, fc_loc, fc2, fc3 = st.columns([2.5, 1.5, 1.5, 1])
         with fc1:
-            search_q = st.text_input("🔍", placeholder="Search jobs... e.g. 'React developer in India'",
+            search_q = st.text_input("🔍", placeholder="Search jobs... e.g. 'React developer'",
                                       label_visibility="collapsed", key="job_search_input")
+        with fc_loc:
+            loc_filter = st.selectbox("Location", ["India", "Worldwide", "United States", "Europe"],
+                                      label_visibility="collapsed")
         with fc2:
             emp_type = st.selectbox("Type", ["All", "Fulltime", "Parttime", "Intern", "Contractor"],
                                      label_visibility="collapsed")
@@ -1185,13 +1189,17 @@ with jobs_col:
         if search_q and search_q != st.session_state.get("_last_board_query", ""):
             should_search = True
             st.session_state["_last_board_query"] = search_q
+            
+        if loc_filter != st.session_state.get("_last_board_loc", ""):
+            should_search = True
+            st.session_state["_last_board_loc"] = loc_filter
 
         if should_search or (not st.session_state.get("board_jobs") and not search_q):
             query = search_q if search_q else "software developer"
             emp_filter = "" if emp_type == "All" else emp_type.upper()
 
             with st.spinner("🔍 Fetching live jobs..."):
-                result = search_jobs(query, num_pages=1, remote_only=remote_only,
+                result = search_jobs(query, num_pages=1, country=loc_filter, remote_only=remote_only,
                                       employment_type=emp_filter)
 
             if result["error"]:
@@ -1516,7 +1524,7 @@ with jobs_col:
                         st.session_state["mock_interview_history"].append({"role": "user", "content": user_resp})
                         st.chat_message("user").markdown(user_resp)
                         with st.spinner("Interviewer is typing..."):
-                            from application_helper import _call_gemini
+                            from app_helper import _call_gemini
                             history_str = "\\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state["mock_interview_history"]])
                             prompt = f"You are a strict but fair hiring manager interviewing a candidate for a {sel_app['job_title']} role. Here is the conversation so far:\\n{history_str}\\n\\nAsk the next behavioral question. Keep it under 50 words. Do not break character."
                             try:
