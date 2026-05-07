@@ -6,3 +6,5 @@ __pycache__/
 uploads/
 .DS_Store
 .planning/
+streamlit.log
+streamlit.pid
