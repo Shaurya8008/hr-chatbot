@@ -338,7 +338,7 @@ def _fetch_linkedin_live(query: str, page: int = 1, location: str = "India") -> 
                     "salary_max": 0,
                     "salary_currency": "USD",
                     "salary_period": "",
-                    "apply_link": f"https://www.linkedin.com/jobs/search/?currentJobId={extracted_id}",
+                    "apply_link": f"https://www.linkedin.com/jobs/view/{extracted_id}/",
                     "apply_options": [],
                     "qualifications": [],
                     "responsibilities": [],

@@ -653,10 +653,12 @@ def bot_reply(prompt: str) -> str:
         if 0 <= idx < len(jobs):
             job = jobs[idx]
             app_id = db.apply(st.session_state.uname, st.session_state.email, job)
-            return (f"🎉 **Application Submitted Automatically!**\n\n"
-                    f"I have successfully applied to the **{job['title']}** role at **{job['company']}** on your behalf.\n\n"
-                    f"**Reference ID:** #{app_id}\n\n"
-                    f"You can check your status anytime by typing *'status {ids[0]}'*.")
+            link_msg = f"👉 **[Click here to complete your application on {job.get('publisher', 'the company site')}]({job['apply_link']})**\n\n" if job.get('apply_link') else ""
+            return (f"📋 **Application Tracked!**\n\n"
+                    f"I've added the **{job['title']}** role at **{job['company']}** to your Application Tracker.\n\n"
+                    f"{link_msg}"
+                    f"**Internal Tracking ID:** #{app_id}\n\n"
+                    f"You can check your tracking status anytime by typing *'status {ids[0]}'*.")
         return f"Job #{ids[0]} not found in your last search. Run a search first!"
 
     # ── Check Status ──
