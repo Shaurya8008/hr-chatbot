@@ -505,18 +505,40 @@ def rank_jobs_for_profile(jobs: list[dict], user_profile: dict) -> list[dict]:
         desc_lower  = job["description"].lower()
         title_lower = job["title"].lower()
 
-        # ── Skill + tag overlap (40%) ──
-        job_skills = set(extract_skills_from_description(job["description"]))
-        job_tags   = set(job.get("tags") or [])
-        combined   = job_skills | job_tags
-
-        if user_skills and combined:
-            overlap  = user_skills & combined
-            skill_sc = len(overlap) / max(len(combined), 1)
-            score   += skill_sc * 40
-            if overlap:
-                reasons.append(f"Skills match: {', '.join(sorted(overlap)[:4])}")
-        elif not user_skills:
+        # ── ML TF-IDF Cosine Similarity (40%) ──
+        # Instead of simple keyword overlap, we use the trained ML Vectorizer
+        # to compute the mathematical cosine similarity between the resume text and job description.
+        try:
+            import os
+            import pickle
+            from sklearn.metrics.pairwise import cosine_similarity
+            
+            model_path = os.path.join(os.path.dirname(__file__), "tfidf_vectorizer.pkl")
+            if os.path.exists(model_path):
+                with open(model_path, "rb") as f:
+                    vectorizer = pickle.load(f)
+                    
+                # Vectorize the user's entire resume text + skills
+                resume_text = user_profile.get("resume_text", "") + " " + (user_profile.get("skills") or "")
+                job_text = job["description"] + " " + " ".join(job.get("tags") or [])
+                
+                if resume_text.strip() and job_text.strip():
+                    tfidf_matrix = vectorizer.transform([resume_text, job_text])
+                    cos_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
+                    
+                    # Convert cosine similarity (0 to 1) to a score out of 40
+                    skill_sc = min(cos_sim * 1.5, 1.0) # Boost slightly as raw cosine sim is often low
+                    score += skill_sc * 40
+                    
+                    if cos_sim > 0.1:
+                        reasons.append(f"ML Match Confidence: {cos_sim*100:.1f}%")
+                else:
+                    score += 15 # baseline if no text
+            else:
+                # Fallback if model missing
+                score += 20
+        except Exception as e:
+            print("ML Matcher Error:", e)
             score += 20
 
         # ── Location match (20%) ──
