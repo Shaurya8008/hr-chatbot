@@ -431,46 +431,47 @@ def parse_resume(pdf_bytes):
 
 
 # ─────────────────────────────────────────────
-#  INTENT CLASSIFIER
+#  MACHINE LEARNING INTENT CLASSIFIER
 # ─────────────────────────────────────────────
 class NLU:
     def __init__(self):
+        self.model = None
         try:
-            with open(INT_PATH) as f:
-                self.intents = json.load(f)['intents']
-        except:
-            self.intents = []
+            import pickle
+            import os
+            model_path = os.path.join(BASE_DIR, "intent_model.pkl")
+            if os.path.exists(model_path):
+                with open(model_path, "rb") as f:
+                    self.model = pickle.load(f)
+        except Exception as e:
+            st.error(f"Failed to load ML Intent Model: {e}")
 
     def classify(self, text):
-        t = text.lower()
-        best_intent = "unknown"
-        best_score  = 0
-
-        for i in self.intents:
-            for p in i['phrases']:
-                phrase_words = set(re.findall(r'\w+', p.lower()))
-                input_words  = set(re.findall(r'\w+', t))
-                if not input_words:
-                    continue
-                overlap = len(phrase_words & input_words)
-                score   = overlap / max(len(input_words), 1)
-                if score > best_score:
-                    best_score  = score
-                    best_intent = i['intent']
-
-        # Extra keyword fallbacks
-        if re.search(r'\bapply\b', t) and re.search(r'\d+', t): return 'apply_job'
-        if re.search(r'\bstatus\b', t):                          return 'check_status'
-        if re.search(r'\bcover\s*letter\b', t):                  return 'generate_cover_letter'
-        if re.search(r'\bresume\b.*\b(summary|tailor|help)\b', t): return 'generate_resume_summary'
-        if re.search(r'\bcold\s*email\b', t):                    return 'generate_cold_email'
-        if re.search(r'\bfind\b.*\bjob', t) or re.search(r'\bsearch\b.*\bjob', t): return 'search_jobs'
-        if re.search(r'\binterview\b', t):                       return 'schedule_interview'
-        if re.search(r'\bnegotiate\b', t):                       return 'salary_negotiation'
-
-        if best_score < 0.2:
-            return 'unknown'
-        return best_intent
+        if not self.model:
+            return "unknown"
+            
+        try:
+            prediction = self.model.predict([text])[0]
+            # Get prediction probabilities to ensure confidence
+            probs = self.model.predict_proba([text])[0]
+            max_prob = max(probs)
+            
+            # Extra keyword fallbacks (for exact match overrides if ML is uncertain)
+            t = text.lower()
+            if max_prob < 0.15:
+                if re.search(r'\bapply\b', t) and re.search(r'\d+', t): return 'apply_job'
+                if re.search(r'\bstatus\b', t):                          return 'check_status'
+                if re.search(r'\bcover\s*letter\b', t):                  return 'generate_cover_letter'
+                if re.search(r'\bresume\b.*\b(summary|tailor|help)\b', t): return 'generate_resume_summary'
+                if re.search(r'\bcold\s*email\b', t):                    return 'generate_cold_email'
+                if re.search(r'\bfind\b.*\bjob', t) or re.search(r'\bsearch\b.*\bjob', t): return 'search_jobs'
+                if re.search(r'\binterview\b', t):                       return 'schedule_interview'
+                if re.search(r'\bnegotiate\b', t):                       return 'salary_negotiation'
+                return "unknown"
+                
+            return prediction
+        except:
+            return "unknown"
 
 
 # ─────────────────────────────────────────────

@@ -24,8 +24,7 @@ GEMINI_URL     = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMI
 
 def _call_gemini(prompt: str) -> str | None:
     """Call Gemini API with retry on rate limits. Returns None on ANY failure — never raises."""
-    if not GEMINI_API_KEY:
-        return None
+    return None
 
     for attempt in range(3):
         try:

@@ -2,75 +2,75 @@
   "intents": [
     {
       "intent": "greet",
-      "phrases": ["hello", "hi", "hey", "good morning", "good afternoon", "is anyone there?", "start"]
+      "phrases": ["hello", "hi", "hey", "good morning", "good afternoon", "is anyone there?", "start", "greetings", "hi there", "hello bot", "hey talent ai", "i need help", "start the chat", "can you help me?", "hiya"]
     },
     {
       "intent": "farewell",
-      "phrases": ["bye", "goodbye", "see you later", "thanks for the help", "catch you later"]
+      "phrases": ["bye", "goodbye", "see you later", "thanks for the help", "catch you later", "end chat", "i am done", "quit", "exit", "farewell", "thanks bye", "close session", "that will be all", "have a good day"]
     },
     {
       "intent": "search_jobs",
-      "phrases": ["find me jobs", "search jobs", "look for jobs", "job search", "find roles", "find me a role", "remote jobs", "find remote", "show me remote", "sde role", "developer jobs", "analyst jobs", "engineering jobs", "find me remote python jobs", "data analyst internship", "remote sde role"]
+      "phrases": ["find me jobs", "search jobs", "look for jobs", "job search", "find roles", "find me a role", "remote jobs", "find remote", "show me remote", "sde role", "developer jobs", "analyst jobs", "engineering jobs", "find me remote python jobs", "data analyst internship", "remote sde role", "i am looking for a job", "can you show me jobs", "fetch job listings", "i need a new job", "search open positions", "find a software engineering job"]
     },
     {
       "intent": "job_openings",
-      "phrases": ["current job openings", "what roles are available?", "any vacancies?", "list open positions", "jobs in engineering", "hiring in sales", "show me jobs", "available positions", "view job openings", "get me jobs", "jobs available"]
+      "phrases": ["current job openings", "what roles are available?", "any vacancies?", "list open positions", "jobs in engineering", "hiring in sales", "show me jobs", "available positions", "view job openings", "get me jobs", "jobs available", "what are the open roles", "show me all vacancies", "is anyone hiring right now", "list current openings"]
     },
     {
       "intent": "suggest_jobs",
-      "phrases": ["suggest jobs for me", "what roles match my profile", "recommend jobs", "jobs matching my skills", "suitable jobs for me", "job recommendations", "match my resume", "match jobs to my resume", "best jobs for me"]
+      "phrases": ["suggest jobs for me", "what roles match my profile", "recommend jobs", "jobs matching my skills", "suitable jobs for me", "job recommendations", "match my resume", "match jobs to my resume", "best jobs for me", "what jobs fit my background", "can you recommend a role", "suggest positions", "match my profile", "what should i apply for"]
     },
     {
       "intent": "apply_job",
-      "phrases": ["how do i apply for a job?", "i want to apply", "application process", "where can i submit my resume?", "starting my application", "how to apply"]
+      "phrases": ["how do i apply for a job?", "i want to apply", "application process", "where can i submit my resume?", "starting my application", "how to apply", "can i apply now", "apply for this role", "i want to apply for the developer role", "submit my application", "guide me through applying"]
     },
     {
       "intent": "check_status",
-      "phrases": ["what is my application status?", "check application", "track my application", "where is my job application?", "has my application been reviewed?", "status of", "check status"]
+      "phrases": ["what is my application status?", "check application", "track my application", "where is my job application?", "has my application been reviewed?", "status of", "check status", "did i get the job", "any updates on my application", "track application status", "where am i in the process"]
     },
     {
       "intent": "generate_cover_letter",
-      "phrases": ["write a cover letter", "cover letter for", "generate cover letter", "help me write a cover letter", "draft a cover letter", "cover letter"]
+      "phrases": ["write a cover letter", "cover letter for", "generate cover letter", "help me write a cover letter", "draft a cover letter", "cover letter", "make a cover letter for me", "i need a cover letter", "can you draft a letter for me", "auto generate cover letter", "create cover letter"]
     },
     {
       "intent": "generate_resume_summary",
-      "phrases": ["help with my resume", "resume summary", "write resume summary", "tailor my resume", "resume for this job", "resume bullet points", "generate resume"]
+      "phrases": ["help with my resume", "resume summary", "write resume summary", "tailor my resume", "resume for this job", "resume bullet points", "generate resume", "summarize my skills", "give me a resume summary", "make my resume better", "profile summary"]
     },
     {
       "intent": "generate_cold_email",
-      "phrases": ["cold email", "write an email to apply", "draft email", "application email", "outreach email", "email for job"]
+      "phrases": ["cold email", "write an email to apply", "draft email", "application email", "outreach email", "email for job", "cold outreach template", "write a cold email", "draft an outreach email for me", "send a cold email", "recruiter email template"]
     },
     {
       "intent": "set_preferences",
-      "phrases": ["i prefer remote", "my salary range", "set my preferences", "update my profile", "i want to work in", "my experience level is", "i am a fresher", "i am senior", "change location preference"]
+      "phrases": ["i prefer remote", "my salary range", "set my preferences", "update my profile", "i want to work in", "my experience level is", "i am a fresher", "i am senior", "change location preference", "update settings", "change my salary expectations", "i only want remote jobs", "set location to new york"]
     },
     {
       "intent": "bookmark_job",
-      "phrases": ["save this job", "bookmark job", "save job", "add to favorites", "shortlist this"]
+      "phrases": ["save this job", "bookmark job", "save job", "add to favorites", "shortlist this", "keep this job for later", "mark this job", "star this job", "save role"]
     },
     {
       "intent": "schedule_interview",
-      "phrases": ["i want to schedule an interview", "book my interview", "set up a meeting", "when can i interview?", "availability for interview", "start interview", "mock interview"]
+      "phrases": ["i want to schedule an interview", "book my interview", "set up a meeting", "when can i interview?", "availability for interview", "start interview", "mock interview", "let's do a mock interview", "practice interview", "simulate an interview with me", "help me practice interviewing"]
     },
     {
       "intent": "leave_policy",
-      "phrases": ["what is the leave policy?", "how many vacation days do i have?", "sick leave rules", "applying for leave", "paternity leave policy", "leave policy"]
+      "phrases": ["what is the leave policy?", "how many vacation days do i have?", "sick leave rules", "applying for leave", "paternity leave policy", "leave policy", "maternity leave details", "how to take time off", "pto policy", "vacation policy", "time off"]
     },
     {
       "intent": "salary_info",
-      "phrases": ["when is payday?", "salary structure", "benefits and compensation", "is there a bonus?", "details about my pay", "salary info"]
+      "phrases": ["when is payday?", "salary structure", "benefits and compensation", "is there a bonus?", "details about my pay", "salary info", "what is the compensation package", "negotiate salary", "how much does this pay", "tell me about the salary"]
     },
     {
       "intent": "onboarding_faq",
-      "phrases": ["what is my joining date?", "documents needed for joining", "is there a dress code?", "what happens on the first day?", "onboarding process guide", "onboarding faq"]
+      "phrases": ["what is my joining date?", "documents needed for joining", "is there a dress code?", "what happens on the first day?", "onboarding process guide", "onboarding faq", "how do i onboard", "new employee questions", "first day of work", "what should i bring on day one"]
     },
     {
       "intent": "resignation_process",
-      "phrases": ["how to resign?", "what is the notice period?", "quitting the job", "exit process details", "submitting resignation", "how to resign"]
+      "phrases": ["how to resign?", "what is the notice period?", "quitting the job", "exit process details", "submitting resignation", "how to resign", "i want to quit", "two weeks notice", "resignation letter", "resigning from my role"]
     },
     {
       "intent": "save_resume",
-      "phrases": ["save my resume", "upload my resume", "here is my resume", "i want to upload my cv", "upload cv", "submit resume", "attach resume"]
+      "phrases": ["save my resume", "upload my resume", "here is my resume", "i want to upload my cv", "upload cv", "submit resume", "attach resume", "here is my pdf", "parsing my resume", "read my cv"]
     },
     {
       "intent": "unknown",
